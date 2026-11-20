@@ -1,0 +1,17 @@
+{
+  "name": "ns-fitness-api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "mongoose": "^8.19.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.0",
+    "bcrypt": "^6.0.0",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

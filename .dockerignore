@@ -1,0 +1,12 @@
+**
+!backend/
+!backend/package*.json
+!backend/app.js
+!backend/src/
+!backend/src/**
+!frontend/
+!frontend/package*.json
+!frontend/index.html
+!frontend/vite.config.js
+!frontend/src/
+!frontend/src/**

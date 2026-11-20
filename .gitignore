@@ -1,0 +1,19 @@
+node_modules/
+dist/
+coverage/
+
+# Local configuration. Commit the example files for new contributors.
+.env
+.env.*
+!.env.example
+
+# Local release exports, phase notes, and the owner's payment QR image
+/NS-Fitness-Phase-*.zip
+/PHASE-*.md
+/qr.jpeg
+
+# Local tooling
+*.log
+.netlify/
+.DS_Store
+Thumbs.db

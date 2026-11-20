@@ -1,0 +1,31 @@
+@import 'tailwindcss';
+
+:root { font-family: Archivo, system-ui, sans-serif; color: #fafafa; background: #080808; color-scheme: dark; }
+button, a { outline-offset: 5px; }
+input { display: block; width: 100%; margin-top: .4rem; padding: .8rem; border: 1px solid #666; background: #151515; border-radius: .4rem; }
+button { background: white; color: #080808; border-radius: .4rem; padding: .75rem 1rem; cursor: pointer; }
+button:disabled { opacity: .6; }
+.admin-shell { display:grid; gap:1.5rem; min-width:0; }
+.admin-shell nav, .controls, .section-heading { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
+.admin-shell nav { border-bottom:1px solid #333; }
+.admin-shell nav a { padding:.8rem .2rem; color:#aaa; }
+.admin-shell nav a.active { color:white; border-bottom:2px solid white; }
+.admin-shell nav button { margin-left:auto; }
+.section-heading { justify-content:space-between; }
+.section-heading h1 { font-size:clamp(2rem,5vw,3rem); font-weight:650; letter-spacing:-.045em; overflow-wrap:anywhere; }
+.action { background:#fafafa; color:#101010; border-radius:.4rem; padding:.75rem 1rem; }
+.secondary { border:1px solid #555; color:#eee; background:transparent; }
+.metrics, .profile, .field-grid, .activity { display:grid; gap:1rem; }
+.metrics { grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr)); }
+.metrics div, .activity section, .admin-shell fieldset, .profile { background:#141414; border:1px solid #333; border-radius:.65rem; padding:1.1rem; min-width:0; }
+.metrics dd { font-size:2rem; font-weight:650; }
+.admin-shell dt, .admin-shell small { color:#bbb; }
+.admin-shell small { display:block; font-size:.85rem; }
+.admin-shell h2, .admin-shell legend { font-size:1.12rem; font-weight:600; }
+.admin-shell .row { display:flex; align-items:center; justify-content:space-between; gap:.8rem; padding:1rem 0; border-bottom:1px solid #333; overflow-wrap:anywhere; }
+.admin-shell a.row:hover { text-decoration:underline; }
+.admin-shell form { display:grid; gap:1rem; }
+.admin-shell select { display:block; width:100%; margin-top:.4rem; padding:.8rem; background:#151515; border:1px solid #666; border-radius:.4rem; }
+.admin-shell p[role=alert] { color:#ffc9bf; }
+.profile dd { overflow-wrap:anywhere; }
+@media(min-width:640px) { .field-grid,.activity,.profile { grid-template-columns:repeat(2,minmax(0,1fr)); } }
