@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { login, logout, me } from '../controllers/authController.js';
+import { changePassword, login, logout, me } from '../controllers/authController.js';
 import { authenticate, requireRole } from '../middleware/authMiddleware.js';
 
 const router = Router();
@@ -13,6 +13,7 @@ router.use((req, res, next) => {
 });
 router.post('/auth/login', login);
 router.get('/auth/me', authenticate, me);
+router.patch('/auth/password', authenticate, changePassword);
 router.post('/auth/logout', authenticate, logout);
 router.get('/admin/session', authenticate, requireRole('ADMIN'), me);
 router.get('/member/session', authenticate, requireRole('MEMBER'), me);

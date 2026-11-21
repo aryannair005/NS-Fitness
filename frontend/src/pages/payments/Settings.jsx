@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext.jsx';
 import api from '../../services/api.js';
 import { Heading, Load, message } from '../admin/shared.jsx';
 
@@ -34,5 +36,10 @@ function SettingsForm({settings}) {
     {error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}<button disabled={busy}>Save settings</button></form>;
 }
 export default function Settings() {
-  return <><Heading title="Gym settings"/><Load path="/settings">{({settings})=><SettingsForm settings={settings}/>}</Load></>;
+  const { user } = useAuth();
+  return <><Heading title="Gym settings"/>
+    <section className="grid gap-2"><h2>Personal details</h2><p>Login phone number · {user.mobile}</p>
+      <Link className="underline" to="/account/password">Change password</Link>
+    </section>
+    <Load path="/settings">{({settings})=><SettingsForm settings={settings}/>}</Load></>;
 }

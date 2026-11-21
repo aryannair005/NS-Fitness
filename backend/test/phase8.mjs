@@ -74,13 +74,13 @@ try {
     assert.match(cookie,/HttpOnly/i); assert.match(cookie,/Secure/i);
     return cookie.split(';')[0];
   }
-  const admin=await login(adminPhone);
+  let admin=await login(adminPhone);
   const data={fullName:'Test Member',fatherName:'Test Parent',address:'Test address',mobile:memberPhone,password,joiningDate:'2026-01-01',plan:'Monthly',startDate:'2026-01-01',endDate:'2026-01-31',amount:1000};
   const {member}=await (await api('/admin/members','POST',data,admin,201)).json();
   const duplicate = await api('/admin/members','POST',data,admin,409);
   assert.match((await duplicate.json()).message,/phone number/);
   assert.equal((await (await api('/admin/members','GET',undefined,admin)).json()).members.length,1);
-  const user=await login(memberPhone.slice(3));
+  let user=await login(memberPhone.slice(3));
   await api('/admin/dashboard','GET',undefined,user,403);
   await api('/member/profile','GET',undefined,'',401);
   const other={...data,mobile:'+919100000003',fullName:'Other Member'};
@@ -109,6 +109,22 @@ try {
   await api('/nonexistent','GET',undefined,'',404);
   console.log('Passed live API checks with a disposable MongoDB replica set.');
   if (process.env.CHROME_BIN) await checkLayouts({base,adminPhone,memberPhone,password,memberId:member._id});
+  async function verifyPasswordChange(mobile, cookie) {
+    const newPassword = randomUUID();
+    await api('/auth/password','PATCH',{oldPassword:'incorrect',newPassword},cookie,400);
+    await api('/auth/password','PATCH',{oldPassword:password,newPassword:'short'},cookie,400);
+    const response = await api('/auth/password','PATCH',{oldPassword:password,newPassword},cookie);
+    const renewed = response.headers.get('set-cookie').split(';')[0];
+    await api('/auth/me','GET',undefined,cookie,401);
+    await api('/auth/me','GET',undefined,renewed);
+    await api('/auth/login','POST',{mobile,password},'',401);
+    await api('/auth/login','POST',{mobile,password:newPassword});
+    return renewed;
+  }
+  await api('/auth/password','PATCH',{},'',401);
+  user = await verifyPasswordChange(memberPhone,user);
+  admin = await verifyPasswordChange(adminPhone,admin);
+  console.log('Passed password change and session rotation for both roles.');
   await api('/admin/members/'+member._id+'/deactivate','PATCH',{},admin,204);
   await api('/member/profile','GET',undefined,user,401);
   await api('/auth/logout','POST',{},admin,204);

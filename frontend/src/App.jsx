@@ -3,6 +3,7 @@ import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import Home, { Signup } from './pages/Home.jsx';
 import Login from './pages/Login.jsx';
+import ChangePassword from './pages/ChangePassword.jsx';
 import api from './services/api.js';
 import PaymentQr from './pages/payments/PaymentQr.jsx';
 import MemberPortal from './pages/member/MemberPortal.jsx';
@@ -44,6 +45,7 @@ function SessionRoutes() {
   return <Routes>
     <Route path="/login" element={user ? <Navigate to={home} replace /> : <><Login /><Link className="underline" to="/pay">Pay the gym by QR code</Link></>} />
     {user?.role === 'ADMIN' && <Route path="/admin/*" element={<Admin />} />}
+    {user && <Route path="/account/password" element={<ChangePassword />} />}
     {user?.role === 'MEMBER' && <Route path="/member/*" element={<MemberPortal />} />}
     <Route path="*" element={<Navigate to={home} replace />} />
   </Routes>;
