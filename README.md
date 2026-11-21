@@ -2,6 +2,8 @@
 
 NS FITNESS is a gym membership management app for a gym owner and its members. It uses React, Vite, and Tailwind CSS on the frontend, with Express, Mongoose, and MongoDB on the backend.
 
+[Open NS Fitness](https://ns-fitness.netlify.app/)
+
 | Who | What they can do |
 | --- | --- |
 | Gym owner | Create member accounts, update profiles, deactivate access, renew or suspend memberships, record manual payments, and upload the gym’s payment QR code. |
@@ -41,25 +43,33 @@ npm.cmd --prefix frontend run dev
 
 Open [the local app](http://localhost:5173). The frontend defaults to the local API. To override it, copy `frontend/.env.example` to `frontend/.env` and set `VITE_API_URL`. Frontend variables are visible to visitors.
 
-## Create the first admin
+## Accounts and sign-in
 
 Admins and members sign in using a phone number and password. Ten-digit numbers use India's +91 country code. Enter other international numbers with their country code.
 
-### Upgrade an existing database
+### Create an admin from VS Code
 
-Stop the old backend before switching versions. For a single existing admin, set `ADMIN_PHONE` in `backend/.env` to the number that admin will use to sign in. For multiple admins, set `ADMIN_PHONES_JSON` to a JSON object mapping each admin's MongoDB user ID to their phone number. Members use the mobile number already saved on their profile.
-
-Run `node backend/src/migratePhones.js` from the project root for a read-only check. Resolve any missing numbers or collisions it reports. With a backup available and the backend still stopped, run `node backend/src/migratePhones.js --apply` to populate the new identifiers and remove the old email fields and indexes. Then start the updated app. Existing passwords and membership records are preserved. A fresh database can skip the migration.
-
-### New admin account
-
-Temporarily add `ADMIN_PHONE` and `ADMIN_PASSWORD` to `backend/.env`. Choose a password of at least 12 characters and at most 72 UTF-8 bytes. From the project root, run:
+Open a terminal in the project root. To create an admin for the live gym, use the same database in `backend/.env` as Render uses for `MONGODB_URI`. Temporarily add `ADMIN_PHONE` and `ADMIN_PASSWORD` to `backend/.env`. Choose a password of at least 12 characters and at most 72 UTF-8 bytes. From the project root, run:
 
 ```powershell
 node backend/src/createAdmin.js
 ```
 
-After the script prints **Admin account created**, remove those two bootstrap values and sign in. The script creates a new account and rejects a phone number already in use. To create a regular member, use **Admin → Add member**. The server assigns the member role and creates the profile, login, and initial membership together.
+After the script prints **Admin account created.**, remove `ADMIN_PHONE` and `ADMIN_PASSWORD` from the local file. You can sign in immediately. Repeat with an unused phone number for each additional admin.
+
+### Register a member
+
+1. Sign in as an admin and open **Add member**. Enter the member's details, initial password, and membership plan.
+2. Select **Create member**. The app saves the profile, login, and first membership together.
+3. Give the member their login details. They can use [Sign in](https://ns-fitness.netlify.app/login) or the sign-in form on the [Sign up page](https://ns-fitness.netlify.app/signup). New visitors can call the gym from that page to arrange registration.
+
+Passwords start hidden on **Sign in**, **Sign up**, and **Add member**. Select the eye inside the password field to show the password, then select it again to hide it.
+
+### Migrate an older email-based database
+
+Stop the old backend before switching versions. For a single existing admin, set `ADMIN_PHONE` in `backend/.env` to the number that admin will use to sign in. For multiple admins, set `ADMIN_PHONES_JSON` to a JSON object mapping each admin's MongoDB user ID to their phone number. Members use the mobile number already saved on their profile.
+
+Run `node backend/src/migratePhones.js` from the project root for a read-only check. Resolve any missing numbers or collisions it reports. With a backup available and the backend still stopped, run `node backend/src/migratePhones.js --apply` to populate the new identifiers and remove the old email fields and indexes. Then start the updated app. Existing passwords and membership records are preserved. A fresh database can skip the migration.
 
 ## Memberships and payments
 
@@ -88,13 +98,15 @@ $env:CHROME_BIN = 'C:\Program Files\Google\Chrome\Application\chrome.exe'
 node backend/test/phase8.mjs
 ```
 
-## Deployment plan
+## Production deployment
 
-The planned hosts are **Netlify for the frontend** and **Render for the backend**. Deployment is pending. Both can use the npm build and start scripts.
+The frontend runs on Netlify and the API runs on Render. MongoDB Atlas stores the gym's records.
 
-| Service | Settings |
+| Service | Project settings |
 | --- | --- |
-| Netlify | Base directory `frontend`, build command `npm ci --include=dev && npm run build`, publish directory `dist`. Set `VITE_API_URL=/api`. |
-| Render | Node web service, root directory `backend`, build command `npm ci --omit=dev`, start command `npm start`. Set `NODE_ENV=production`, `MONGODB_URI`, `JWT_SECRET`, and `CLIENT_ORIGIN` to the exact Netlify HTTPS origin for the latter. |
+| Netlify | Base directory `frontend`, build command `npm run build`, publish directory `dist`. The repository's `netlify.toml` sets `VITE_API_URL=/api`. |
+| Render | Node web service with root directory `backend`, build command `npm ci --omit=dev`, and start command `npm start`. Set `NODE_ENV=production`, `MONGODB_URI`, `JWT_SECRET`, and `CLIENT_ORIGIN`. |
 
-When deploying, configure Netlify to proxy `/api/*` to the Render service’s `/api/:splat` first, then rewrite remaining frontend paths to `/index.html`. This lets the browser use the session cookie through the frontend origin. Verify `/api/health`, sign-in after refresh, and the public `/pay` page from the Netlify URL.
+For this deployment, set **`CLIENT_ORIGIN=https://ns-fitness.netlify.app`** in Render. The login route checks the browser's origin before it checks the password. If the form says **Access denied**, confirm that the setting matches the address used to open the frontend, including `https://`, with no trailing slash or path. Save any correction and redeploy the backend.
+
+Netlify forwards `/api/*` to `https://ns-fitness.onrender.com/api/:splat` and serves the React app for other routes. After a deployment, open the [health endpoint through Netlify](https://ns-fitness.netlify.app/api/health) and look for `{"status":"ready"}`. Then sign in, refresh the dashboard to check the session, and open the [public payment page](https://ns-fitness.netlify.app/pay).
