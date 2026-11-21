@@ -1,5 +1,6 @@
 import { planLabels } from './planLabels.js';
 import { useState } from 'react';
+import PasswordField from '../../components/PasswordField.jsx';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api.js';
@@ -22,7 +23,9 @@ export default function MemberForm({ member }) {
   }
   return <><Heading title={member ? 'Edit member' : 'Add member'} /><form onSubmit={handleSubmit(submit)}>
     <fieldset><legend>Personal details</legend><div className="field-grid">{fields.map(([key,label,type]) => <label key={key}>{label}<input required type={type} {...register(key)} /></label>)}</div></fieldset>
-    {!member && <><fieldset><legend>Member login</legend><label>Initial password<input required minLength={12} type="password" autoComplete="new-password" {...register('password')} /></label><small>Use at least 12 characters. Give these login details to the member.</small></fieldset>
+    {!member && <><fieldset><legend>Member login</legend>
+      <PasswordField label="Initial password" required minLength={12} autoComplete="new-password" {...register('password')} />
+      <small>Use at least 12 characters. Give these login details to the member.</small></fieldset>
       <fieldset><legend>Initial membership</legend><div className="field-grid"><label>Plan<select {...register('plan')}>{Object.entries(planLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       <label>Fee (₹)<input type="number" required min="0" step=".01" {...register('amount',{valueAsNumber:true})}/></label>
       <label>Start date<input required type="date" {...register('startDate')} /></label><label>End date<input required type="date" {...register('endDate')} /></label></div></fieldset></>}

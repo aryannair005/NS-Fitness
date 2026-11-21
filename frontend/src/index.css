@@ -5,6 +5,9 @@ button, a { outline-offset: 5px; }
 input { display: block; width: 100%; margin-top: .4rem; padding: .8rem; border: 1px solid #666; background: #151515; border-radius: .4rem; }
 button { background: white; color: #080808; border-radius: .4rem; padding: .75rem 1rem; cursor: pointer; }
 button:disabled { opacity: .6; }
+.member-password { position: relative; }
+.member-password input { padding-right: 3rem; }
+.member-password button { position: absolute; inset: 1px 1px 1px auto; width: 2.75rem; display: grid; place-items: center; padding: 0; background: transparent; color: white; outline-offset: -4px; }
 .admin-shell { display:grid; gap:1.5rem; min-width:0; }
 .admin-shell nav, .controls, .section-heading { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
 .admin-shell nav { border-bottom:1px solid #333; }

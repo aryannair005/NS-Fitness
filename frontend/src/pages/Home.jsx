@@ -1,5 +1,6 @@
 import { ArrowUpRight, CalendarDays, CreditCard, Dumbbell, ReceiptText } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
+import Login from './Login.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import './home.css';
 
@@ -35,10 +36,12 @@ export default function Home() {
 }
 
 export function Signup({contact}) {
+  const { user } = useAuth();
+  if (user) return <Navigate to={user.role === 'ADMIN' ? '/admin' : '/member'} replace />;
   return <section className="gym-signup">
     <h1>Join NS Fitness</h1>
     <p>Call {contact.ownerName} to choose a membership plan and register your phone number. The gym will give you a password for your member portal.</p>
     <a className="gym-cta" href={'tel:'+contact.contactNumber.replace(/\s/g,'')}>Call {contact.contactNumber}</a>
-    <Link className="gym-login" to="/login">Have your login details? Sign in</Link>
+    <Login embedded />
   </section>;
 }

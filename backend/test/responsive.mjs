@@ -40,6 +40,16 @@ export async function checkLayouts({base,adminPhone,memberPhone,password,memberI
       return msg.result;
     }
     const evaluate=async expression=>(await send('Runtime.evaluate',{expression,returnByValue:true})).result.value;
+    async function checkPasswordEye() {
+      const field = 'document.querySelector("input[name=password]")';
+      assert.equal(await evaluate(field + '.type'), 'password');
+      for (const [action,type] of [['Show password','text'],['Hide password','password']]) {
+        const selector = JSON.stringify('button[aria-label="' + action + '"]');
+        await evaluate('document.querySelector(' + selector + ').click()');
+        await until(async () => await evaluate(field + '.type') === type);
+        assert.equal(await evaluate(field + '.value === ' + JSON.stringify(password)), true);
+      }
+    }
     for(const [mobile,pages] of [
       ['', [['/','Inside your membership'],['/signup','Join NS Fitness'],['/login','Sign in'],['/pay','Download QR code']]],
       [adminPhone,[['/admin','Recent payments'],['/admin/members','Other Member'],['/admin/members/new','Create member'],['/admin/members/'+memberId,'Renew membership'],['/admin/members/'+memberId+'/edit','Save changes'],['/admin/memberships','Test Member'],['/admin/payments','Payment history'],['/admin/settings','Save settings'],['/account/password','Update password']]],
@@ -47,13 +57,14 @@ export async function checkLayouts({base,adminPhone,memberPhone,password,memberI
     ]) {
       if(mobile) {
         await send('Network.clearBrowserCookies');
-        await send('Page.navigate',{url:base+'/login'});
+        await send('Page.navigate',{url:base+(mobile === adminPhone ? '/login' : '/signup')});
         await until(()=>evaluate('Boolean(document.querySelector("input[name=mobile]"))'));
         for(const [name,text] of [['mobile',mobile],['password',password]]) {
           await evaluate('document.querySelector("input[name='+name+']").focus()');
           await send('Input.insertText',{text});
         }
-        await evaluate('document.querySelector("form button").click()');
+        await checkPasswordEye();
+        await evaluate('document.querySelector("form").requestSubmit()');
         await until(()=>evaluate('location.pathname === '+JSON.stringify(pages[0][0])));
       }
       if (mobile === adminPhone) {
@@ -66,6 +77,7 @@ export async function checkLayouts({base,adminPhone,memberPhone,password,memberI
           // Populate the same native controls and events as typing or selecting a date.
           await evaluate(`(() => {const input=${field};Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,${JSON.stringify(value)});input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));})()`);
         }
+        await checkPasswordEye();
         await evaluate('document.querySelector("form").requestSubmit()');
         await until(()=>evaluate('document.body.innerText.includes("Member account created.")'));
         await until(()=>evaluate('document.body.innerText.includes("Browser Test Member")'));
