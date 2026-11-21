@@ -1,0 +1,24 @@
+.gym-home { display:grid; gap:clamp(2.5rem,6vw,4rem); }
+.gym-hero { position:relative; isolation:isolate; overflow:hidden; display:grid; place-items:center; text-align:center; min-height:clamp(25rem,53vh,38rem); border-block:1px solid #343434; background:#101010; }
+.gym-rings { position:absolute; z-index:-1; inset:-40%; background:repeating-radial-gradient(ellipse at 50% 70%, transparent 0 18px,#73737355 19px 20px,transparent 21px 34px); transform:rotate(-17deg); mask-image:linear-gradient(90deg,#000,transparent 38%,transparent 62%,#000); }
+.gym-intro,.gym-signup { display:grid; justify-items:center; gap:1.1rem; padding:2.5rem 1rem; }
+.gym-intro h1 { font-size:clamp(3.4rem,10vw,7rem); line-height:.96; letter-spacing:-.075em; font-weight:800; }
+.gym-intro h1 em { font-family:Georgia,serif; font-weight:400; }
+.gym-intro p,.gym-signup p { color:#c0c0c0; max-width:43ch; text-wrap:pretty; }
+.gym-cta { display:inline-flex; align-items:center; justify-content:center; gap:1.1rem; background:#fafafa; color:#111; padding:.85rem 1.6rem; border-radius:2rem; font-weight:650; }
+.gym-login,.gym-features a { text-decoration:underline; text-underline-offset:.24em; font-size:.9rem; }
+.gym-home h2,.gym-signup h1 { font-size:clamp(1.8rem,4vw,2.7rem); letter-spacing:-.045em; font-weight:650; }
+.gym-features { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr)); gap:.9rem; margin-top:1rem; }
+.gym-features article { display:flex; flex-direction:column; align-items:flex-start; gap:.8rem; padding:1.4rem; border:1px solid #373737; border-radius:.75rem; background:linear-gradient(145deg,#1d1d1d,#101010); }
+.gym-features h3 { font-size:1.2rem; font-weight:600; }
+.gym-features p { color:#bdbdbd; line-height:1.6; }
+.gym-features a { margin-top:auto; }
+.gym-signup { text-align:center; margin:auto; }
+@media(prefers-reduced-motion:no-preference){
+  .gym-rings { animation:gym-drift 4s ease-out both; }
+  .gym-intro { animation:gym-enter .65s ease-out both; }
+  .gym-features article,.gym-cta { transition:transform .2s,border-color .2s; }
+  .gym-features article:hover,.gym-cta:hover { transform:translateY(-3px); border-color:#777; }
+  @keyframes gym-drift { from { transform:rotate(-21deg) scale(1.12); } to { transform:rotate(-17deg); } }
+  @keyframes gym-enter { from { opacity:.15; transform:translateY(.75rem); } to { opacity:1; transform:translateY(0); } }
+}

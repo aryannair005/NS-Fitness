@@ -11,6 +11,10 @@ router.get('/payments/member/:memberId',admin,payments.ledger);
 router.get('/member/payments',member,payments.ledger);
 router.post('/payments',admin,payments.record);
 router.patch('/payments/:id',admin,payments.updateStatus);
+router.get('/gym-contact',async(req,res)=>{
+  const settings=await GymSettings.findById('gym').select('ownerName contactNumber').lean() ?? new GymSettings();
+  res.json({ownerName:settings.ownerName,contactNumber:settings.contactNumber});
+});
 router.get('/payment-qr',async(req,res)=>{
   const settings=await GymSettings.findById('gym').select('upiQrCode').lean();
   res.json({upiQrCode:settings?.upiQrCode || ''});

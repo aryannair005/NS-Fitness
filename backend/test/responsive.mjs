@@ -41,7 +41,7 @@ export async function checkLayouts({base,adminPhone,memberPhone,password,memberI
     }
     const evaluate=async expression=>(await send('Runtime.evaluate',{expression,returnByValue:true})).result.value;
     for(const [mobile,pages] of [
-      ['', [['/login','Sign in'],['/pay','Download QR code']]],
+      ['', [['/','Inside your membership'],['/signup','Join NS Fitness'],['/login','Sign in'],['/pay','Download QR code']]],
       [adminPhone,[['/admin','Recent payments'],['/admin/members','Other Member'],['/admin/members/new','Create member'],['/admin/members/'+memberId,'Renew membership'],['/admin/members/'+memberId+'/edit','Save changes'],['/admin/memberships','Test Member'],['/admin/payments','Payment history'],['/admin/settings','Save settings']]],
       [memberPhone,[['/member','Verified payments'],['/member/profile','Test Parent'],['/member/payments','Receipts']]]
     ]) {
@@ -66,7 +66,7 @@ export async function checkLayouts({base,adminPhone,memberPhone,password,memberI
         }
       }
     }
-    console.log('Passed 13 browser routes at 360, 768 and 1440px.');
+    console.log('Passed 15 browser routes at 360, 768 and 1440px.');
   } finally {
     ws?.close();browser.kill();await closed;
     await rm(profile,{recursive:true,force:true,maxRetries:5,retryDelay:200}).catch(()=>{});

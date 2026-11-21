@@ -31,8 +31,17 @@ if (process.env.NODE_ENV === 'production') {
   app.get('/{*path}', (req, res) => res.sendFile('index.html', { root: dist }));
 }
 app.use((error, req, res, next) => {
-  if (error.code === 11000 && !error.keyPattern?.mobile) return res.status(409).json({ message:'This payment entry or transaction reference already exists.' });
-  if (error.code === 11000) return res.status(409).json({ message: 'That phone number is already in use.' });
+  if (error.code === 11000) {
+    const keys = error.keyPattern ?? error.errorResponse?.keyPattern ?? {};
+    const index = /\bindex: (\S+) dup key/.exec(error.message)?.[1];
+    let message = 'A record with the same unique value already exists.';
+    if (keys.mobile || index === 'mobile_1') message = 'That phone number is already in use.';
+    else if (keys.email || index === 'email_1') message = 'An old email index is blocking phone-only accounts. Complete the phone migration before adding members.';
+    else if (keys.entryKey || keys.transactionReference || keys.requestId || ['entryKey_1','requestId_1','method_1_transactionReference_1'].includes(index)) {
+      message = 'This payment entry or transaction reference already exists.';
+    }
+    return res.status(409).json({ message });
+  }
   if (error.name === 'ValidationError') return res.status(400).json({ message: 'Check the following fields: ' + Object.keys(error.errors).join(', ') });
   if (error.name === 'CastError') return res.status(400).json({ message: 'Invalid member ID.' });
   if (error.expose && error.status && !error.type) return res.status(error.status).json({ message: error.message });
