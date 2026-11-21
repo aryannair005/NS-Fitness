@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
 export function publicUser(user) {
-  return { id: user.id, email: user.email, role: user.role, memberId: user.memberId ?? null };
+  return { id: user.id, mobile: user.mobile, role: user.role, memberId: user.memberId ?? null };
 }
 
 export async function authenticate(req, res, next) {

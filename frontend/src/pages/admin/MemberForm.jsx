@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api.js';
 import { Heading, message } from './shared.jsx';
 
-const fields = [['fullName','Full name','text'],['fatherName',"Father’s name",'text'],['mobile','Mobile number','tel'],['email','Login email','email'],['address','Address','text'],['joiningDate','Joining date','date']];
+const fields = [['fullName','Full name','text'],['fatherName',"Father’s name",'text'],['mobile','Login phone number','tel'],['address','Address','text'],['joiningDate','Joining date','date']];
 export default function MemberForm({ member }) {
   const navigate = useNavigate();
   const [error,setError] = useState('');

@@ -3,7 +3,6 @@ WORKDIR /build
 COPY frontend/package*.json ./
 RUN npm ci
 COPY frontend/ ./
-ARG VITE_SUPPORT_EMAIL
 RUN npm run build
 
 FROM node:22-bookworm-slim

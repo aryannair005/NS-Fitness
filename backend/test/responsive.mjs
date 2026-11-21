@@ -15,7 +15,7 @@ async function until(fn) {
   throw new Error('Timed out waiting for browser readiness.');
 }
 
-export async function checkLayouts({base,adminEmail,memberEmail,password,memberId}) {
+export async function checkLayouts({base,adminPhone,memberPhone,password,memberId}) {
   const profile=await mkdtemp(join(tmpdir(),'ns-browser-'));
   const browser=spawn(process.env.CHROME_BIN,['--headless=new',...(process.env.NS_TEST_ISOLATED_CHROME === '1' ? ['--no-sandbox'] : []),'--disable-breakpad','--disable-crash-reporter','--disable-gpu','--no-first-run','--disable-background-networking','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{stdio:'ignore',windowsHide:true});
   const closed=once(browser,'close');
@@ -40,16 +40,16 @@ export async function checkLayouts({base,adminEmail,memberEmail,password,memberI
       return msg.result;
     }
     const evaluate=async expression=>(await send('Runtime.evaluate',{expression,returnByValue:true})).result.value;
-    for(const [email,pages] of [
+    for(const [mobile,pages] of [
       ['', [['/login','Sign in'],['/pay','Download QR code']]],
-      [adminEmail,[['/admin','Recent payments'],['/admin/members','Other Member'],['/admin/members/new','Create member'],['/admin/members/'+memberId,'Renew membership'],['/admin/members/'+memberId+'/edit','Save changes'],['/admin/memberships','Test Member'],['/admin/payments','Payment history'],['/admin/settings','Save settings']]],
-      [memberEmail,[['/member','Verified payments'],['/member/profile','Test Parent'],['/member/payments','Receipts']]]
+      [adminPhone,[['/admin','Recent payments'],['/admin/members','Other Member'],['/admin/members/new','Create member'],['/admin/members/'+memberId,'Renew membership'],['/admin/members/'+memberId+'/edit','Save changes'],['/admin/memberships','Test Member'],['/admin/payments','Payment history'],['/admin/settings','Save settings']]],
+      [memberPhone,[['/member','Verified payments'],['/member/profile','Test Parent'],['/member/payments','Receipts']]]
     ]) {
-      if(email) {
+      if(mobile) {
         await send('Network.clearBrowserCookies');
         await send('Page.navigate',{url:base+'/login'});
-        await until(()=>evaluate('Boolean(document.querySelector("input[name=email]"))'));
-        for(const [name,text] of [['email',email],['password',password]]) {
+        await until(()=>evaluate('Boolean(document.querySelector("input[name=mobile]"))'));
+        for(const [name,text] of [['mobile',mobile],['password',password]]) {
           await evaluate('document.querySelector("input[name='+name+']").focus()');
           await send('Input.insertText',{text});
         }

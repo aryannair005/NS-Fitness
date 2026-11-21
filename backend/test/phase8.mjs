@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { once } from 'node:events';
@@ -27,6 +28,28 @@ try {
     await bootstrap.db.admin().command({replSetInitiate:{_id:replica,members:[{_id:0,host:'127.0.0.1:'+port}]}});
   } finally {await bootstrap.close();}
   await mongoose.connect(uri+'?replicaSet='+replica,{serverSelectionTimeoutMS:15000});
+  const legacy = mongoose.connection.useDb('migration_fixture').db;
+  const profiles = legacy.collection('members'), accounts = legacy.collection('users');
+  await profiles.createIndex({email:1},{unique:true});
+  await accounts.createIndex({email:1},{unique:true});
+  const legacyMember = await profiles.insertOne({mobile:'91000 00005',email:'member@example.test'});
+  await accounts.insertMany([
+    {role:'ADMIN',email:'admin@example.test',passwordHash:'retained'},
+    {role:'MEMBER',memberId:legacyMember.insertedId,email:'member@example.test',passwordHash:'retained'},
+  ]);
+  const runMigration = (...args) => execFileSync(process.execPath, [
+    fileURLToPath(new URL('../src/migratePhones.js',import.meta.url)), ...args
+  ], {env:{...process.env,MONGODB_URI:uri.replace('/phase8','/migration_fixture')+'?replicaSet='+replica,ADMIN_PHONE:'9100000004',ADMIN_PHONES_JSON:'{}'}});
+  runMigration();
+  assert.equal(await accounts.countDocuments({mobile:{$exists:true}}),0);
+  runMigration('--apply');
+  runMigration('--apply');
+  for (const collection of [accounts,profiles]) {
+    assert.equal(await collection.countDocuments({email:{$exists:true}}),0);
+    assert(!(await collection.indexes()).some(index=>index.key.email));
+  }
+  assert.equal((await accounts.findOne({role:'MEMBER'})).mobile,'+919100000005');
+  assert.equal((await accounts.findOne({role:'ADMIN'})).passwordHash,'retained');
   process.env.NODE_ENV='production';
   process.env.JWT_SECRET=randomBytes(48).toString('hex');
   const {default:app}=await import('../app.js');
@@ -42,26 +65,26 @@ try {
     return response;
   }
   const password=randomUUID();
-  const adminEmail='owner@example.test', memberEmail='member@example.test';
-  await User.create({email:adminEmail,passwordHash:await bcrypt.hash(password,4),role:'ADMIN'});
-  async function login(email) {
-    const response=await api('/auth/login','POST',{email,password});
+  const adminPhone='+919100000001', memberPhone='+919100000002';
+  await User.create({mobile:adminPhone,passwordHash:await bcrypt.hash(password,4),role:'ADMIN'});
+  async function login(mobile) {
+    const response=await api('/auth/login','POST',{mobile,password});
     const cookie=response.headers.get('set-cookie');
     assert.match(cookie,/HttpOnly/i); assert.match(cookie,/Secure/i);
     return cookie.split(';')[0];
   }
-  const admin=await login(adminEmail);
-  const data={fullName:'Test Member',fatherName:'Test Parent',address:'Test address',mobile:'9999999999',email:memberEmail,password,joiningDate:'2026-01-01',plan:'Monthly',startDate:'2026-01-01',endDate:'2026-01-31',amount:1000};
+  const admin=await login(adminPhone);
+  const data={fullName:'Test Member',fatherName:'Test Parent',address:'Test address',mobile:memberPhone,password,joiningDate:'2026-01-01',plan:'Monthly',startDate:'2026-01-01',endDate:'2026-01-31',amount:1000};
   const {member}=await (await api('/admin/members','POST',data,admin,201)).json();
   await api('/admin/members','POST',data,admin,409);
   assert.equal((await (await api('/admin/members','GET',undefined,admin)).json()).members.length,1);
-  const user=await login(memberEmail);
+  const user=await login(memberPhone.slice(3));
   await api('/admin/dashboard','GET',undefined,user,403);
   await api('/member/profile','GET',undefined,'',401);
-  const other={...data,email:'other@example.test',fullName:'Other Member'};
+  const other={...data,mobile:'+919100000003',fullName:'Other Member'};
   await api('/admin/members','POST',other,admin,201);
   const self=await (await api('/member/profile?memberId=other','GET',undefined,user)).json();
-  assert.equal(self.member.email,memberEmail);
+  assert.equal(self.member.mobile,memberPhone);
   const renewal={memberId:member._id,startDate:'2026-02-01',plan:'Quarterly',amount:2000};
   const {membership:term}=await (await api('/memberships','POST',renewal,admin,201)).json();
   assert.equal(term.endDate.slice(0,10),'2026-04-30');
@@ -77,7 +100,7 @@ try {
   assert.deepEqual(await (await api('/payment-qr')).json(),{upiQrCode:settings.upiQrCode});
   await api('/nonexistent','GET',undefined,'',404);
   console.log('Passed live API checks with a disposable MongoDB replica set.');
-  if (process.env.CHROME_BIN) await checkLayouts({base,adminEmail,memberEmail,password,memberId:member._id});
+  if (process.env.CHROME_BIN) await checkLayouts({base,adminPhone,memberPhone,password,memberId:member._id});
   await api('/admin/members/'+member._id+'/deactivate','PATCH',{},admin,204);
   await api('/member/profile','GET',undefined,user,401);
   await api('/auth/logout','POST',{},admin,204);

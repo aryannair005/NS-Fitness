@@ -22,7 +22,6 @@ function GymFooter() {
   const phone = contact?.contactNumber || '+91 78359 05504';
   return <footer className="mt-auto border-t border-white/20 pt-5 text-sm text-neutral-300">
     {contact?.ownerName || 'Nitesh Shah'} &middot; <a href={'tel:'+phone}>{phone}</a>
-    {import.meta.env.VITE_SUPPORT_EMAIL && <p>Technical support · <a href={'mailto:'+import.meta.env.VITE_SUPPORT_EMAIL}>{import.meta.env.VITE_SUPPORT_EMAIL}</a></p>}
   </footer>;
 }
 

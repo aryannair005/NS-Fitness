@@ -39,17 +39,27 @@ npm.cmd --prefix backend run dev
 npm.cmd --prefix frontend run dev
 ```
 
-Open [the local app](http://localhost:5173). The frontend defaults to the local API. To override it or display a technical support address, copy `frontend/.env.example` to `frontend/.env` and set `VITE_API_URL` or `VITE_SUPPORT_EMAIL`. Frontend variables are visible to visitors.
+Open [the local app](http://localhost:5173). The frontend defaults to the local API. To override it, copy `frontend/.env.example` to `frontend/.env` and set `VITE_API_URL`. Frontend variables are visible to visitors.
 
 ## Create the first admin
 
-Temporarily add `ADMIN_EMAIL` and `ADMIN_PASSWORD` to `backend/.env`. Choose a password of at least 12 characters and at most 72 UTF-8 bytes. From the project root, run:
+Admins and members sign in using a phone number and password. Ten-digit numbers use India's +91 country code. Enter other international numbers with their country code.
+
+### Upgrade an existing database
+
+Stop the old backend before switching versions. For a single existing admin, set `ADMIN_PHONE` in `backend/.env` to the number that admin will use to sign in. For multiple admins, set `ADMIN_PHONES_JSON` to a JSON object mapping each admin's MongoDB user ID to their phone number. Members use the mobile number already saved on their profile.
+
+Run `node backend/src/migratePhones.js` from the project root for a read-only check. Resolve any missing numbers or collisions it reports. With a backup available and the backend still stopped, run `node backend/src/migratePhones.js --apply` to populate the new identifiers and remove the old email fields and indexes. Then start the updated app. Existing passwords and membership records are preserved. A fresh database can skip the migration.
+
+### New admin account
+
+Temporarily add `ADMIN_PHONE` and `ADMIN_PASSWORD` to `backend/.env`. Choose a password of at least 12 characters and at most 72 UTF-8 bytes. From the project root, run:
 
 ```powershell
 node backend/src/createAdmin.js
 ```
 
-After the script prints **Admin account created**, remove those two bootstrap values and sign in. The script creates a new account and rejects an email already in use. To create a regular member, use **Admin → Add member**. The server assigns the member role and creates the profile, login, and initial membership together.
+After the script prints **Admin account created**, remove those two bootstrap values and sign in. The script creates a new account and rejects a phone number already in use. To create a regular member, use **Admin → Add member**. The server assigns the member role and creates the profile, login, and initial membership together.
 
 ## Memberships and payments
 

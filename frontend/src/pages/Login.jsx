@@ -10,7 +10,7 @@ export default function Login() {
   }
   return <form className="grid w-full max-w-sm gap-5" onSubmit={handleSubmit(submit)}>
     <h1 className="text-4xl font-semibold tracking-tight">Sign in</h1>
-    <label>Email<input required type="email" autoComplete="username" {...register('email')} /></label>
+    <label>Phone number<input required type="tel" autoComplete="username" {...register('mobile')} /></label>
     <label>Password<input required type="password" autoComplete="current-password" {...register('password')} /></label>
     {errors.root && <p role="alert">{errors.root.message}</p>}
     <button disabled={isSubmitting}>{isSubmitting ? 'Signing in…' : 'Sign in'}</button>

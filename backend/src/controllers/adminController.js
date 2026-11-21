@@ -1,3 +1,4 @@
+import { normalizeMobile } from '../utils/mobile.js';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
 import User from '../models/User.js';
@@ -18,10 +19,12 @@ function date(value, label) {
 
 function profile(body) {
   const data = {};
-  for (const key of ['fullName', 'fatherName', 'mobile', 'email', 'address']) {
+  for (const key of ['fullName', 'fatherName', 'address']) {
     if (typeof body[key] !== 'string' || !body[key].trim()) fail(400, 'Enter a valid ' + key + '.');
     data[key] = body[key].trim();
   }
+  data.mobile = normalizeMobile(body.mobile);
+  if (!data.mobile) fail(400, 'Enter a valid phone number, including the country code for international numbers.');
   data.joiningDate = date(body.joiningDate, 'joining date');
   return data;
 }
@@ -39,7 +42,7 @@ export async function createMember(req, res) {
   const passwordHash = await bcrypt.hash(body.password, 12);
   const member = await mongoose.connection.transaction(async session => {
     const [created] = await Member.create([data], { session });
-    await User.create([{ email: created.email, memberId: created._id, role: 'MEMBER', passwordHash }], { session });
+    await User.create([{ mobile: created.mobile, memberId: created._id, role: 'MEMBER', passwordHash }], { session });
     await Membership.create([{ memberId: created._id, plan: body.plan, startDate, endDate, amount: body.amount }], { session });
     return created;
   });
@@ -51,7 +54,7 @@ export async function updateMember(req, res) {
   const member = await mongoose.connection.transaction(async session => {
     const updated = await Member.findByIdAndUpdate(req.params.id, data, { new: true, runValidators: true, session });
     if (!updated) fail(404, 'Member not found.');
-    const account = await User.updateOne({ memberId: updated._id, role: 'MEMBER' }, { email: updated.email }, { session });
+    const account = await User.updateOne({ memberId: updated._id, role: 'MEMBER' }, { mobile: updated.mobile }, { session });
     if (!account.matchedCount) fail(409, 'Member login is missing.');
     return updated;
   });
@@ -71,7 +74,7 @@ export async function deactivateMember(req, res) {
 export async function listMembers(req, res) {
   const search = String(req.query.q ?? '').trim().toLowerCase();
   const rows = await Member.find().sort({ fullName: 1 }).lean();
-  const members = rows.filter(row => [row.fullName, row.email, row.mobile].some(value => value.toLowerCase().includes(search)));
+  const members = rows.filter(row => [row.fullName, row.mobile].some(value => value.toLowerCase().includes(search)));
   res.json({ members });
 }
 

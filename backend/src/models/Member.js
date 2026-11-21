@@ -1,11 +1,11 @@
+import { mobileField } from '../utils/mobile.js';
 import mongoose from 'mongoose';
 
 const text = (maxlength) => ({ type: String, required: true, trim: true, maxlength });
 const schema = new mongoose.Schema({
   fullName: text(120),
   fatherName: text(120),
-  mobile: { ...text(18), match: /^\+?[\d ()-]{7,18}$/ },
-  email: { ...text(254), lowercase: true, unique: true, match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
+  mobile: mobileField,
   address: text(500),
   joiningDate: { type: Date, required: true },
   isActive: { type: Boolean, default: true },

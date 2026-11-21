@@ -4,7 +4,7 @@ import { readLedger } from './paymentController.js';
 
 export async function profile(req, res) {
   const member = await Member.findById(req.user.memberId)
-    .select('fullName fatherName email mobile address joiningDate').lean();
+    .select('fullName fatherName mobile address joiningDate').lean();
   if (!member) return res.status(404).json({ message: 'Member profile unavailable. Please contact the gym.' });
   res.json({ member });
 }

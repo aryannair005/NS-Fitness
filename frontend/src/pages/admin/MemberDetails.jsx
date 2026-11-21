@@ -21,7 +21,7 @@ export default function MemberDetails({ edit }) {
   }
   return <Load key={id+'-'+rev+'-'+key} path={'/admin/members/'+id}>{({member,memberships,suggestedStart}) => edit ? <MemberForm member={member}/> : <>
     <Heading title={member.fullName}/>{state?.notice && !rev && <p role="status">{state.notice}</p>}
-    <dl className="profile">{[['Login access',member.isActive?'Enabled':'Deactivated'],['Login email',member.email],['Mobile',member.mobile],['Father’s name',member.fatherName],['Address',member.address],['Joining date',member.joiningDate.slice(0,10)]].map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+    <dl className="profile">{[['Login access',member.isActive?'Enabled':'Deactivated'],['Login phone',member.mobile],['Father’s name',member.fatherName],['Address',member.address],['Joining date',member.joiningDate.slice(0,10)]].map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
     {notice && <p role="status">{notice}</p>}
     <TermHistory member={member} memberships={memberships} suggestedStart={suggestedStart} onSaved={text => { setNotice(text); setRev(value => value + 1); }} />
     <div className="controls"><Link className="action" to={'/admin/members/'+id+'/edit'}>Edit member</Link>{member.isActive && <button className="secondary" disabled={busy} onClick={deactivate}>Deactivate member</button>}</div>{error && <p role="alert">{error}</p>}

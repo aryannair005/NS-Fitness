@@ -31,8 +31,8 @@ if (process.env.NODE_ENV === 'production') {
   app.get('/{*path}', (req, res) => res.sendFile('index.html', { root: dist }));
 }
 app.use((error, req, res, next) => {
-  if (error.code === 11000 && !error.keyPattern?.email) return res.status(409).json({ message:'This payment entry or transaction reference already exists.' });
-  if (error.code === 11000) return res.status(409).json({ message: 'That email is already in use.' });
+  if (error.code === 11000 && !error.keyPattern?.mobile) return res.status(409).json({ message:'This payment entry or transaction reference already exists.' });
+  if (error.code === 11000) return res.status(409).json({ message: 'That phone number is already in use.' });
   if (error.name === 'ValidationError') return res.status(400).json({ message: 'Check the following fields: ' + Object.keys(error.errors).join(', ') });
   if (error.name === 'CastError') return res.status(400).json({ message: 'Invalid member ID.' });
   if (error.expose && error.status && !error.type) return res.status(error.status).json({ message: error.message });

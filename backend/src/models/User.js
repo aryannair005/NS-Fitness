@@ -1,7 +1,8 @@
+import { mobileField } from '../utils/mobile.js';
 import mongoose from 'mongoose';
 
 const schema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true, lowercase: true, trim: true, match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
+  mobile: mobileField,
   passwordHash: { type: String, required: true, select: false },
   role: { type: String, enum: ['ADMIN', 'MEMBER'], required: true },
   memberId: { type: mongoose.Schema.Types.ObjectId, ref: 'Member', required() { return this.role === 'MEMBER'; } },
