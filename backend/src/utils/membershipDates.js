@@ -19,8 +19,8 @@ export function nextStart(latest, today = gymToday()) {
 }
 
 export function statusOf(term, today = gymToday()) {
-  if (term.suspended) return 'SUSPENDED';
   if (term.endDate < today) return 'EXPIRED';
+  if (term.suspended) return 'SUSPENDED';
   if (term.startDate > today) return 'SCHEDULED';
   if (+term.endDate === +today + day) return 'EXPIRING TOMORROW';
   return 'ACTIVE';

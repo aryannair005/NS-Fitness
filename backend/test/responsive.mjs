@@ -42,8 +42,8 @@ export async function checkLayouts({base,adminPhone,memberPhone,password,memberI
     const evaluate=async expression=>(await send('Runtime.evaluate',{expression,returnByValue:true})).result.value;
     for(const [mobile,pages] of [
       ['', [['/','Inside your membership'],['/signup','Join NS Fitness'],['/login','Sign in'],['/pay','Download QR code']]],
-      [adminPhone,[['/admin','Recent payments'],['/admin/members','Other Member'],['/admin/members/new','Create member'],['/admin/members/'+memberId,'Renew membership'],['/admin/members/'+memberId+'/edit','Save changes'],['/admin/memberships','Test Member'],['/admin/payments','Payment history'],['/admin/settings','Save settings']]],
-      [memberPhone,[['/member','Verified payments'],['/member/profile','Test Parent'],['/member/payments','Receipts']]]
+      [adminPhone,[['/admin','Recent payments'],['/admin/members','Other Member'],['/admin/members/new','Create member'],['/admin/members/'+memberId,'Renew membership'],['/admin/members/'+memberId+'/edit','Save changes'],['/admin/memberships','Test Member'],['/admin/payments','Payment history'],['/admin/settings','Save settings'],['/account/password','Update password']]],
+      [memberPhone,[['/member','Verified payments'],['/member/profile','Test Parent'],['/member/payments','Receipts'],['/account/password','Update password']]]
     ]) {
       if(mobile) {
         await send('Network.clearBrowserCookies');
@@ -56,6 +56,20 @@ export async function checkLayouts({base,adminPhone,memberPhone,password,memberI
         await evaluate('document.querySelector("form button").click()');
         await until(()=>evaluate('location.pathname === '+JSON.stringify(pages[0][0])));
       }
+      if (mobile === adminPhone) {
+        await send('Page.navigate',{url:base+'/admin/members/new'});
+        await until(()=>evaluate('Boolean(document.querySelector("input[name=fullName]"))'));
+        const fields={fullName:'Browser Test Member',fatherName:'Browser Parent',mobile:'9100000020',
+          address:'Local fixture',password,amount:'800',endDate:'2099-12-31'};
+        for(const [name,value] of Object.entries(fields)) {
+          const field='document.querySelector('+JSON.stringify('input[name="'+name+'"]')+')';
+          // Populate the same native controls and events as typing or selecting a date.
+          await evaluate(`(() => {const input=${field};Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,${JSON.stringify(value)});input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+        }
+        await evaluate('document.querySelector("form").requestSubmit()');
+        await until(()=>evaluate('document.body.innerText.includes("Member account created.")'));
+        await until(()=>evaluate('document.body.innerText.includes("Browser Test Member")'));
+      }
       for(const [path,label] of pages) {
         await send('Page.navigate',{url:base+path});
         await until(()=>evaluate('location.pathname === '+JSON.stringify(path)+' && document.body?.innerText.includes('+JSON.stringify(label)+') && !document.body.innerText.includes("Loading.")')).catch(()=>{throw new Error('Did not render '+path)});
@@ -66,7 +80,11 @@ export async function checkLayouts({base,adminPhone,memberPhone,password,memberI
         }
       }
     }
-    console.log('Passed 15 browser routes at 360, 768 and 1440px.');
+    // Expire the member session while the page is open, then use client navigation.
+    await send('Network.clearBrowserCookies');
+    await evaluate(`document.querySelector('a[href="/member/profile"]').click()`);
+    await until(()=>evaluate('location.pathname === "/login" && Boolean(document.querySelector("input[name=mobile]"))'));
+    console.log('Passed 17 role/page combinations at 360, 768 and 1440px and expired-session recovery.');
   } finally {
     ws?.close();browser.kill();await closed;
     await rm(profile,{recursive:true,force:true,maxRetries:5,retryDelay:200}).catch(()=>{});

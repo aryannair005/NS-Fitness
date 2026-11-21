@@ -2,6 +2,7 @@ import {Router} from 'express';
 import {authenticate,requireRole} from '../middleware/authMiddleware.js';
 import * as payments from '../controllers/paymentController.js';
 import GymSettings from '../models/GymSettings.js';
+import { normalizeMobile } from '../utils/mobile.js';
 
 const router=Router();
 const admin=[authenticate,requireRole('ADMIN')];
@@ -24,7 +25,7 @@ router.get('/settings',authenticate,async(req,res)=>{
 });
 router.put('/settings',admin,async(req,res)=>{
   const {ownerName, contactNumber, upiQrCode}=req.body ?? {};
-  if (![ownerName,contactNumber,upiQrCode].every(v=>typeof v==='string') || !ownerName.trim() || !/^[+\d ()-]{7,32}$/.test(contactNumber)) return res.status(400).json({message:'Check the owner name and phone number.'});
+  if (![ownerName,contactNumber,upiQrCode].every(v=>typeof v==='string') || !ownerName.trim() || !normalizeMobile(contactNumber)) return res.status(400).json({message:'Check the owner name and phone number.'});
   if (upiQrCode) {
     const match=/^data:image\/(png|jpeg);base64,([A-Za-z0-9+/]+=*)$/.exec(upiQrCode);
     const bytes=match && Buffer.from(match[2],'base64');

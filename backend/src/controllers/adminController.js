@@ -103,9 +103,9 @@ export async function dashboard(req, res) {
   for (const payment of payments) {
     const key = String(payment.membershipId);
     paid.set(key, (paid.get(key) || 0) + Math.round(payment.amount * 100));
-    if (payment.paymentDate >= monthStart && payment.paymentDate < nextMonth) revenue += payment.amount;
+    if (payment.paymentDate >= monthStart && payment.paymentDate < nextMonth) revenue += Math.round(payment.amount * 100);
   }
-  const stats = { total: members.length, active: 0, expired: 0, tomorrow: 0, revenue,
+  const stats = { total: members.length, active: 0, expired: 0, tomorrow: 0, revenue: revenue / 100,
     unpaid: plans.filter(plan => Math.round(plan.amount * 100) > (paid.get(String(plan._id)) || 0)).length };
   for (const member of members.filter(row => row.isActive)) {
     const current = plans.find(plan => String(plan.memberId) === String(member._id) && plan.startDate <= today);

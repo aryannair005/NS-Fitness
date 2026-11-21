@@ -18,7 +18,17 @@ export function AuthProvider({ children }) {
       setState(error.response?.status === 401 ? 'ready' : 'offline');
     }
   }
-  useEffect(() => { restore(); }, []);
+  useEffect(() => {
+    const interceptor = api.interceptors.response.use(undefined, error => {
+      if (error.response?.status === 401 && error.config?.url !== '/auth/login') {
+        setUser(null);
+        setState('ready');
+      }
+      return Promise.reject(error);
+    });
+    restore();
+    return () => api.interceptors.response.eject(interceptor);
+  }, []);
   async function login(values) {
     const { data } = await api.post('/auth/login', values);
     setUser(data.user);

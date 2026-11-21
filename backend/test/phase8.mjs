@@ -8,7 +8,6 @@ import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';
 import { checkLayouts } from './responsive.mjs';
 import { ensurePhoneIndexes } from '../src/config/phoneIndexes.js';
 
@@ -54,7 +53,6 @@ try {
   process.env.NODE_ENV='production';
   process.env.JWT_SECRET=randomBytes(48).toString('hex');
   const {default:app}=await import('../app.js');
-  const {default:User}=await import('../src/models/User.js');
   await Promise.all(mongoose.modelNames().map(name=>mongoose.model(name).init()));
   server=app.listen(0,'127.0.0.1');
   await once(server,'listening');
@@ -67,7 +65,9 @@ try {
   }
   const password=randomUUID();
   const adminPhone='+919100000001', memberPhone='+919100000002';
-  await User.create({mobile:adminPhone,passwordHash:await bcrypt.hash(password,4),role:'ADMIN'});
+  execFileSync(process.execPath,[fileURLToPath(new URL('../src/createAdmin.js',import.meta.url))],{
+    env:{...process.env,ADMIN_PHONE:adminPhone,ADMIN_PASSWORD:password,MONGODB_URI:uri+'?replicaSet='+replica}
+  });
   async function login(mobile) {
     const response=await api('/auth/login','POST',{mobile,password});
     const cookie=response.headers.get('set-cookie');
@@ -102,8 +102,49 @@ try {
   const ledger=await (await api('/member/payments','GET',undefined,user)).json();
   assert.equal(ledger.memberships.length,2); assert.equal(ledger.payments.length,1);
   assert.equal(ledger.memberships.find(t=>t._id===term._id).due,1250);
+  // A pending receipt only changes the balance once verified. Two simultaneous
+  // credits against the final balance must never collect more than the fee.
+  const outstanding=1250;
+  const receiptBody={...payment,entryKey:randomUUID(),amount:outstanding,status:'PENDING'};
+  const pending=(await (await api('/payments','POST',receiptBody,admin,201)).json()).payment;
+  async function due() {
+    const result=await (await api('/member/payments','GET',undefined,user)).json();
+    return result.memberships.find(t=>t._id===term._id).due;
+  }
+  assert.equal(await due(),outstanding);
+  await api('/payments/'+pending._id,'PATCH',{status:'VERIFIED'},admin);
+  assert.equal(await due(),0);
+  await api('/payments/'+pending._id,'PATCH',{status:'PENDING'},admin);
+  assert.equal(await due(),outstanding);
+  const competing=await Promise.all([1,2].map(()=>fetch(base+'/api/payments',{
+    method:'POST',headers:{cookie:admin,'content-type':'application/json'},
+    body:JSON.stringify({...payment,entryKey:randomUUID(),amount:outstanding})
+  })));
+  assert.deepEqual(competing.map(r=>r.status).sort(),[201,409]);
+  assert.equal(await due(),0);
+
+  const invalid={...data,mobile:'+919100000008',amount:0.001};
+  await api('/admin/members','POST',invalid,admin,400);
+  assert.equal((await (await api('/admin/members?q=9100000008','GET',undefined,admin)).json()).members.length,0);
+  const future={...renewal,startDate:'2090-01-01',amount:300};
+  const next=(await (await api('/memberships','POST',future,admin,201)).json()).membership;
+  for (const [suspended,expected] of [[true,'SUSPENDED'],[false,'SCHEDULED']]) {
+    const result=await (await api('/memberships/'+next._id,'PUT',{suspended},admin)).json();
+    assert.equal(result.membership.status,expected);
+  }
+  assert.equal((await (await api('/memberships/'+term._id,'PUT',{suspended:true},admin)).json()).membership.status,'EXPIRED');
+  const changed={...data,fullName:'Updated Member',mobile:'+919100000009'};
+  await api('/admin/members/'+member._id,'PUT',changed,admin);
+  await api('/auth/login','POST',{mobile:memberPhone,password},'',401);
+  await login(changed.mobile);
+  await api('/admin/members/'+member._id,'PUT',data,admin);
+  await api('/admin/members/'+member._id,'PUT',{...data,mobile:other.mobile},admin,409);
+  assert.equal((await (await api('/member/profile','GET',undefined,user)).json()).member.mobile,memberPhone);
+  console.log('Passed payment corrections, concurrent receipts, fee rollback, suspension and phone-edit checks.');
   const settings={ownerName:'Test Owner',contactNumber:'9999999999',upiQrCode:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jVQAAAABJRU5ErkJggg=='};
   await api('/settings','PUT',settings,user,403);
+  await api('/settings','PUT',{...settings,contactNumber:'-------'},admin,400);
+  await api('/settings','PUT',{...settings,upiQrCode:'invalid'},admin,400);
   await api('/settings','PUT',settings,admin);
   assert.deepEqual(await (await api('/payment-qr')).json(),{upiQrCode:settings.upiQrCode});
   await api('/nonexistent','GET',undefined,'',404);
